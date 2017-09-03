@@ -1,0 +1,75 @@
+《词频特征的提取+距离特征的提取》
+character_group_wzp.py把出现次数不同词频的词分开存储到不同的文件。出现次数分别为1,2,3,4,5,6,7,8,9,10次的词频(1-gram、2-gram的词)
+输入:data\\sentences.txt
+输出:data\\character_group\\vectoritems_wzp_%d.txt %d为0到9的数字，分别代表词频为1到10。
+
+vector_wzp.py生成词频10以上的词构成的特征矩阵、目标矩阵。特征矩阵包含距离特征。
+输入:data\\vectoritems_wzp_10.txt（词频为10的词组成的文件）、data\\sentences.txt为待预测句子和标记
+输出:data\\source_wzp.txt（特征矩阵）、data\\target_wzp.txt（目标矩阵）、vector_wzp.txt（将特征矩阵的第一行（即特征元素集合）输出）
+注意：可以改变输入的词频文件，根据不同的词频文件来生成对应的特征矩阵、目标矩阵、特征元素集合。
+
+vector_wzp_nodistance.py生成词频1以上的词构成的特征矩阵、目标矩阵。但是特征矩阵不包含距离特征。
+输入:data\\vectoritems_wzp.txt（词频1以上的词组成的文件）、data\\sentences.txt
+输出:data\\source_wzp_2.txt、、data\\vector_wzp_2.txt
+因为target_wzp.txt都是一样的，所以不必重复输出。
+
+
+《组合特征的提取》
+首先将构建一个不包含距离特征的句子特征矩阵，然后用这个矩阵进行PMI，得到一些比较重要的单词，筛选出n个；最后得出组合特征。
+
+vector_wzp_nodistance.py构建不包含距离特征的句子特征矩阵；输出到source_wzp_2.txt里面；将特征元素集合输出到vector_wzp_2.txt里面。
+
+由于source_wzp_2.txt太大，无法训练；source_wzp_split_2.py把source_wzp_2.txt文件分成三部分。每个矩阵分别10000 10000 还有5000多维。
+
+PMI_source_wzp_2.py把拆分的三个矩阵的30000多个特征，选出PMI比较重要的词语特征。输出至PMI_important_word.txt、PMI_important_word_1.txt、PMI_important_word_2.txt中。
+可以在selectFeature1()函数中改变输出文件的名字file，在主函数中改变输入文件。
+调整PMI为0.03，特征数目46+60+24；调整PMI为0.025，特征数目55+74+28；调整PMI为0.020，特征数目83+92+39；调整PMI为0.015，特征数目114+123+49；调整PMI为0.010，特征数目为177+189+91=457
+
+find_import_character.py找出这些PMI比较重要的词语特征，将其输出至文件important_character.txt中去。important_character1.txt、important_character2.txt（457个特征）
+
+character_combination_wzp.py用这些重要的词语特征生成一些组合特征。将其输出到另一个文件中去。vectoritems_combination.txt，vectoritems_combination_1.txt、vectoritems_combination_2.txt（457个特征）
+
+vector_wzp_2.py用生成的组合特征来构建特征矩阵，目标矩阵。生成特征矩阵source_wzp_3.txt。
+
+GBDT_SVM_learn_withCombination.py用之前的特征矩阵和组合特征构成的矩阵、目标矩阵来训练数据。GBDT选择特征，SVM训练。vector_wzp.py（之前出现10次以上单词组成的特征）、vector_wzp_3.py组成的特征。（之前出现频率大于10的特征加组合特征，组合特征2775维，太少了，很多句子甚至都没有出现一次组合特征。所以不能增大PMI阈值使得PMI筛选出的单词太少，导致组合特征在很多句子没有出现。应该构造尽可能多的组合特征，然后PMI筛选组合特征，而不是筛选单个特征）
+
+vector_wzp_3.py
+用组合特征构建句子的特征矩阵。#将特征矩阵提取到source_wzp_4.txt,然后PMI筛选特征，也就是说source_wzp4.txt是用组合特征构造的特征矩阵。
+
+
+source_wzp_4_sparsity.py
+输出source_wzp_4.txt特征矩阵中为1的特征，只要出现了就输出，所以输出的可能有重复。
+输出至vectoritems_combination_has1.txt中去。
+
+
+《LDA文档主题模型》
+character_wzp_lda.py  1-gram的词（去除stopwords）输出至vectoritems_lda.txt、vectoritems_lda_1.txt中。vectoritems_lda.txt中有单词和出现次数，vectoritems_lda_1.txt中只要单词,没有次数。
+
+vector_wzp_lda.py  构建特征矩阵，输出至source_wzp_lda.txt中。
+
+lda_train.py 用lda模型训练,输入矩阵为source_wzp_lda.txt。
+
+
+character_wzp_lda_1.py 去除人名、地名、机构团体、其他专名。输出至vectoritems_lda_2.txt、vectoritems_lda_3.txt中。vectoritems_lda_2.txt中有单词和出现次数，vectoritems_lda_3.txt中只要单词,没有次数。
+
+vector_wzp_lda_1.py  构建特征矩阵，输出至source_wzp_lda_1.txt中。
+输出矩阵的特征词vectoritems_lda_3_new.txt，因为初始化的dict顺序和输出顺序不一样。
+
+lda_train_1.py 用lda模型训练,输入矩阵为source_wzp_lda_1.txt。
+
+GBDT_lda.py 用GBDT来筛选source_wzp_lda_1.txt中的特征。筛选出200维左右。
+然后进行lda训练。
+
+PMI_lda.py 用PMI来筛选soure_wzp_lda_1.txt中的特征。然后进行lda训练。
+
+
+《预测》
+save_t_case_info.py将数据库中的待预测文本信息读到txt文件中。
+
+save_id_data_datatype_content.py将读入的待预测文本信息拆分，如果一个句子中有好几个日期，则拆分成好几个预测句子。
+
+predict_all.py输入一个文本信息来预测。结果显示在界面上。
+
+predict_date.py从数据库中读取一个文本信息，预测，将预测结果插入数据库中。
+
+predict_date_file_edition.py将文件中保存的文本信息读取出来，进行预测，将预测结果插入数据库中，因为读取数据库太慢了。

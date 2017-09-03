@@ -1,0 +1,7 @@
+﻿时间类型训练：
+sentenceextracter.py用于使用不同规则提取包含日期的句子部分。
+character.py为统计词频的程序，输入输出文件路径可更改，具体见注释
+vector.py为生成特征矩阵的程序，其中几个parse方法为提取特征的不同方式，输入为标记好的句子，输出为vector.txt和target.txt，输入输出文件路径可更改，具体见注释
+GBDT.py为生成特征分值的程序，输入为vector.txt和target.txt，注意在使用时将两个文件第一行的特征名删除，文件结尾回车可能有影响建议删除
+svmlearn.py为svm训练的程序，注释掉的代码为调参代码，输入为vector.txt和target.txt，本程序接受第一行为特征名
+在使用新的特征时，先在vector.py中修改提取规则，再使用GBDT.py提取有价值特征，再将有价值特征写入vector.txt进行svm训练，可使用excel进行数据排序等处理
